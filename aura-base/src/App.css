@@ -36,3 +36,52 @@
     transform: rotate(360deg);
   }
 }
+
+.app {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f8f9fa;
+}
+
+.main-content {
+  flex: 1;
+  margin-left: 250px;
+  padding: 20px;
+}
+
+.team-selector {
+  padding: 8px 16px;
+  background-color: white;
+  border-radius: 20px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  font-weight: 500;
+}
+
+h1 {
+  font-size: 2rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* Row height alignment */
+.row {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.row > [class*='col-'] {
+  display: flex;
+  flex-direction: column;
+}
+
+.row > [class*='col-'] > * {
+  height: 100%;
+}
+
+/* Responsive adjustments */
+@media (max-width: 991.98px) {
+  .main-content {
+    margin-left: 0;
+    padding: 10px;
+  }
+}

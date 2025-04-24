@@ -1,0 +1,55 @@
+.review-notifications {
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.review-notifications .card-header {
+  background-color: white;
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+  padding: 1rem;
+}
+
+.review-notifications .card-header h5 {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.review-notifications .card-body {
+  padding: 1.25rem;
+}
+
+.aura-change {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.notification-text {
+  color: #6c757d;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.notification-content {
+  max-width: 100%;
+}
+
+.btn {
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.notification-item {
+  padding: 1rem;
+}
+
+.notification-actions button {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+} 
