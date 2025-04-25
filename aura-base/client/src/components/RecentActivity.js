@@ -5,17 +5,29 @@ import './RecentActivity.css';
 
 const ActivityItem = ({ user, action, change, description }) => (
   <ListGroup.Item className="activity-item">
-    <div className="d-flex align-items-center">
-      <img src={user.avatar} alt={user.name} className="activity-avatar" />
-      <div className="ms-3 flex-grow-1">
-        <div className="d-flex justify-content-between align-items-center">
-          <strong>{user.name}</strong>
-          <span className={change > 0 ? 'text-success' : 'text-danger'}>
-            {change > 0 ? <FaArrowUp /> : <FaArrowDown />}
-            {Math.abs(change)} Aura
-          </span>
+    <div className="d-flex">
+      <div className="activity-left d-flex">
+        <img src={user.avatar} alt={user.name} className="activity-avatar" />
+        <div className="ms-3">
+          <div className="user-info">
+            <strong>{user.name}</strong>
+            <div className={`aura-change ${change > 0 ? 'gained' : 'lost'}`}>
+              {change > 0 ? 'Gained' : 'Lost'} {Math.abs(change)} Aura
+            </div>
+          </div>
         </div>
-        <div className="text-muted">{description}</div>
+      </div>
+      
+      <div className="arrow-container">
+        {change > 0 ? (
+          <FaArrowUp className="arrow up" />
+        ) : (
+          <FaArrowDown className="arrow down" />
+        )}
+      </div>
+      
+      <div className="activity-description">
+        {description}
       </div>
     </div>
   </ListGroup.Item>
@@ -44,9 +56,9 @@ const RecentActivity = () => {
   ];
 
   return (
-    <Card className="mb-4">
-      <Card.Header>
-        <h5 className="mb-0">Recent Activity</h5>
+    <Card className="mb-4 recent-activity">
+      <Card.Header className="bg-white">
+        <h5 className="mb-0 fw-bold">Recent Activity</h5>
       </Card.Header>
       <ListGroup variant="flush">
         {activities.map((activity, index) => (

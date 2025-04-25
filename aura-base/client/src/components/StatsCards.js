@@ -42,7 +42,7 @@ const StatsCards = () => {
           <StatsCard
             icon={<FaUser />}
             value="350"
-            label="Your Current:Aura Level"
+            label="Current Aura: Your Aura"
             iconClass="user"
           />
         </div>

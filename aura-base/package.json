@@ -1,8 +1,21 @@
 {
-  "devDependencies": {
-    "concurrently": "^9.1.2"
-  }, 
+  "name": "aura-base",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "client",
+    "server"
+  ],
   "scripts": {
-    "start": "concurrently \"npm run start --prefix client\" \"npm run dev --prefix server\""
+    "start": "concurrently \"npm run start:client\" \"npm run start:server\"",
+    "start:client": "cd client && npm start",
+    "start:server": "cd server && npm run dev"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "nodemon": "^3.1.10",
+    "react-scripts": "^5.0.1"
   }
 }

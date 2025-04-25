@@ -1,0 +1,64 @@
+.history-card {
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  background: white;
+}
+
+.history-card .card-header {
+  background: white;
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+  padding: 1rem;
+}
+
+.history-card .card-header h5 {
+  font-size: 1.25rem;
+  font-weight: 500;
+}
+
+.history-nav button {
+  padding: 0.25rem 0.5rem;
+  color: #6c757d;
+}
+
+.history-nav button:hover {
+  color: #343a40;
+}
+
+.history-item {
+  padding: 1rem;
+  transition: background-color 0.2s;
+}
+
+.history-item:hover {
+  background-color: rgba(0,0,0,0.02);
+}
+
+.history-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.history-content {
+  flex: 1;
+}
+
+.history-user {
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.history-aura {
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.history-description {
+  font-size: 0.9rem;
+  line-height: 1.4;
+  margin-top: 0.25rem;
+  color: #6c757d;
+} 
