@@ -1,6 +1,7 @@
 import React, { useState}  from "react";
 import supabase from "../helper/supabaseClient";
 import { Link } from 'react-router-dom';
+import '../styles/Auth.css';
  
 function Register() {
     const [email, setEmail] = useState("");
@@ -37,23 +38,58 @@ function Register() {
         setDisplayName("");
     }
 
-    return <div>
-        <h2>Register</h2>
-        <br></br>
-        {message && <span>{message}</span>}
-        <form onSubmit={handleSubmit}>
-            <input onChange={(e) => setDisplayName(e.target.value)} value={displayName} type="displayName" required placeholder="Name" />
-            <br></br>
-            <input onChange={(e) => setEmail(e.target.value)} value={email} type="email" required placeholder="Email" />
-            <input onChange={(e) => setPassword(e.target.value)} value={password} type="password" required placeholder="Password" />
-            <button type="Submit">Create Account</button>
-        </form>
-        <br></br>
-        {!created && <span>Already have an account?</span>}
-        {created && <span>Thanks for registering!</span>}
-        <br></br>
-        <Link to="/login">Log in.</Link>
-    </div>;
+    return (
+        <div className="auth-container">
+            <div className="auth-card">
+                <div className="auth-logo">
+                    <img src="/logo.png" alt="AuraBase" className="auth-logo-img" />
+                </div>
+                <h2 className="auth-title">Create Your AuraBase Account</h2>
+                {message && (
+                    <div className={`auth-message ${created ? 'success' : 'error'}`}>
+                        {message}
+                    </div>
+                )}
+                <form className="auth-form" onSubmit={handleSubmit}>
+                    <input 
+                        className="auth-input"
+                        onChange={(e) => setDisplayName(e.target.value)} 
+                        value={displayName} 
+                        type="text" 
+                        required 
+                        placeholder="Display Name" 
+                    />
+                    <input 
+                        className="auth-input"
+                        onChange={(e) => setEmail(e.target.value)} 
+                        value={email} 
+                        type="email" 
+                        required 
+                        placeholder="Email" 
+                    />
+                    <input 
+                        className="auth-input"
+                        onChange={(e) => setPassword(e.target.value)} 
+                        value={password} 
+                        type="password" 
+                        required 
+                        placeholder="Password" 
+                    />
+                    <button className="auth-button" type="Submit">Create Account</button>
+                </form>
+                <div className="auth-link-container">
+                    {!created ? (
+                        <>
+                            <span>Already have an account?</span>
+                            <Link className="auth-link" to="/login">Log in</Link>
+                        </>
+                    ) : (
+                        <span>Thanks for registering! Check your email to confirm your account.</span>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
 }
 
 export default Register;
