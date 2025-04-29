@@ -1,59 +1,83 @@
-import React, { useState } from 'react';
-import { Box, Button, TextField, Typography, Select, MenuItem, Paper } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import {
+  Box,
+  Button,
+  TextField,
+  Typography,
+  Select,
+  MenuItem,
+  Paper
+} from '@mui/material';
+import supabase from '../helper/supabaseClient';
 import './Submit.css';
 
 const Submit = () => {
   const [formData, setFormData] = useState({
-    name: '',             
-    auraPoints: '',       
+    name: '',
+    auraPoints: '',
     description: ''
   });
 
+  const [peopleOptions, setPeopleOptions] = useState([]);
+
+  useEffect(() => {
+    const fetchPeopleMap = async () => {
+      const { data, error } = await supabase
+        .from('groups')
+        .select('people_map')
+        .eq('group_name', 'BDAB')
+        .single();
+
+      if (error) {
+        console.error('Error fetching people map:', error);
+      } else if (data?.people_map) {
+        const formatted = Object.entries(data.people_map).map(([id, name]) => ({ id, name }));
+        setPeopleOptions(formatted);
+      }
+    };
+
+    fetchPeopleMap();
+  }, []);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prevState => ({
-      ...prevState,
-      [name]: value
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
     try {
       const response = await fetch('http://localhost:5001/api/add-event', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
       });
-  
+
       const result = await response.json();
-  
+
       if (response.ok) {
         alert('Event submitted successfully!');
-        // Optionally clear the form:
         setFormData({ name: '', auraPoints: '', description: '' });
       } else {
-        alert('Error submitting event: ' + result.error);
+        alert('Error: ' + result.error);
       }
-    } catch (error) {
-      console.error('Submission error:', error);
+    } catch (err) {
+      console.error('Submission failed:', err);
       alert('Network error submitting event.');
     }
   };
-  
 
   return (
-    <Box sx={{ p: 4, maxWidth: 800, mx: 'auto' }}>
-      <Typography variant="h4" component="h1" gutterBottom>
-       <b> Submit an Event </b>
+    <Box sx={{ p: 4, maxWidth: 600, mx: 'auto', mt: 6 }}>
+      <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 'bold', mb: 4 }}>
+        Submit an Event
       </Typography>
-      <Paper elevation={3} sx={{ p: 4 }}>
+      <Paper elevation={3} sx={{ p: 4, borderRadius: 2, backgroundColor: '#fff' }}>
         <form onSubmit={handleSubmit}>
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="subtitle1" gutterBottom>
+          {/* Person Dropdown */}
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 500 }}>
               Person
             </Typography>
             <Select
@@ -62,14 +86,23 @@ const Submit = () => {
               value={formData.name}
               onChange={handleChange}
               required
+              displayEmpty
+              sx={{ backgroundColor: '#f5f5f5', borderRadius: 1 }}
             >
-              <MenuItem value="Ayush Gupta">Ayush Gupta</MenuItem>
-              {/* Add more people as needed */}
+              <MenuItem value="" disabled>
+                Select a person
+              </MenuItem>
+              {peopleOptions.map((p) => (
+                <MenuItem key={p.id} value={p.name}>
+                  {p.name}
+                </MenuItem>
+              ))}
             </Select>
           </Box>
 
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="subtitle1" gutterBottom>
+          {/* Aura Points Input */}
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 500 }}>
               Amount of Aura
             </Typography>
             <TextField
@@ -78,13 +111,15 @@ const Submit = () => {
               name="auraPoints"
               value={formData.auraPoints}
               onChange={handleChange}
-              placeholder="Enter a positive or negative number"
               required
+              placeholder="Enter aura points"
+              sx={{ backgroundColor: '#f5f5f5', borderRadius: 1 }}
             />
           </Box>
 
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="subtitle1" gutterBottom>
+          {/* Description Field */}
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 500 }}>
               Description
             </Typography>
             <TextField
@@ -94,19 +129,27 @@ const Submit = () => {
               name="description"
               value={formData.description}
               onChange={handleChange}
-              placeholder="Enter event description"
               required
+              placeholder="Describe the event"
+              sx={{ backgroundColor: '#f5f5f5', borderRadius: 1 }}
             />
           </Box>
 
+          {/* Submit Button */}
           <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
             <Button
               type="submit"
               variant="contained"
-              color="primary"
               size="large"
+              sx={{
+                backgroundColor: '#1e73e5',
+                px: 4,
+                py: 1.5,
+                fontWeight: 'bold',
+                '&:hover': { backgroundColor: '#155cc1' }
+              }}
             >
-              Send
+              SEND
             </Button>
           </Box>
         </form>

@@ -126,6 +126,7 @@ const AuraLeaderboard = ({ groupName }) => {
     }
   };
 
+<<<<<<< HEAD
     return (
     <Card className="mb-4 aura-leaderboard">
       <Card.Body style={{ height: '400px' }}>  {/* ✅ Fixed height */}
@@ -133,6 +134,15 @@ const AuraLeaderboard = ({ groupName }) => {
       </Card.Body>
     </Card>
   );
+=======
+    return (
+    <Card className="mb-4 aura-leaderboard">
+      <Card.Body style={{ height: '400px' }}>  {/* ✅ Fixed height */}
+        <Bar data={data} options={options} />
+      </Card.Body>
+    </Card>
+  );
+>>>>>>> c210110ff1aa28f4f44ecaf3d7e9c1550aeb5ee2
 };
 
 export default AuraLeaderboard;
