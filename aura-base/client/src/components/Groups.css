@@ -1,0 +1,67 @@
+.groups-container {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  
+  .group-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+    padding: 24px;
+    margin-bottom: 24px;
+    border: none;
+  }
+  
+  .group-card .card-title {
+    font-size: 1.25rem;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 24px;
+  }
+  
+  .form-control {
+    background-color: #f0f0f0;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 1rem;
+    height: 48px;
+  }
+  
+  .form-control::placeholder {
+    color: #666;
+  }
+  
+  .form-control:focus {
+    background-color: #f0f0f0;
+    box-shadow: none;
+    border: none;
+  }
+  
+  .join-button,
+  .create-button {
+    min-width: 120px;
+    font-weight: 500;
+    border-radius: 8px;
+    padding: 12px 24px;
+    height: 48px;
+    border: none;
+    font-size: 1rem;
+  }
+  
+  .join-button {
+    background-color: #4e95ff;
+  }
+  
+  .create-button {
+    background-color: #4e95ff;
+  }
+  
+  .join-button:hover,
+  .create-button:hover {
+    background-color: #3d84ee;
+  }
+  
+  .card-body {
+    padding: 0;
+  } 
