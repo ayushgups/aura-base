@@ -23,21 +23,7 @@ function App() {
         <Route path="/groups/:userid" element={<DashboardLayout><Wrapper><Groups /></Wrapper></DashboardLayout>} />
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/history/:userid" element={
-          <DashboardLayout>
-            <Wrapper>
-              <Container fluid className="py-4">
-                <div className="d-flex justify-content-between align-items-center mb-4">
-                  <h1>History</h1>
-                  <div className="team-selector">
-                    The Kava Kangaroos
-                  </div>
-                </div>
-                <History />
-              </Container>
-            </Wrapper>
-          </DashboardLayout>
-        } />
+        <Route path="/history/:userid" element={<DashboardLayout><Wrapper><Container fluid className="py-4"><History /></Container></Wrapper></DashboardLayout>} />
       </Routes>
     </Router>
   );

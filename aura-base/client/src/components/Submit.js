@@ -22,11 +22,47 @@ const Submit = () => {
   });
 
   const [peopleOptions, setPeopleOptions] = useState([]);
-  const [groupName, setGroupName] = useState(null);
+  const [groupName, setGroupName] = useState(null); // selected group_id
+  const [groupOptions, setGroupOptions] = useState([]); // [{ id, name }]
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchGroupName = async () => {
+    const fetchUserGroups = async () => {
+      const { data, error } = await supabase
+        .from('users')
+        .select('group_name')
+        .eq('user_id', userid)
+        .single();
+
+      if (error) {
+        console.error('Error fetching user groups:', error);
+      } else {
+        const groupIds = data.group_name || [];
+
+        if (groupIds.length > 0) {
+          const { data: groupData, error: groupError } = await supabase
+            .from('groups')
+            .select('group_id, group_name')
+            .in('group_id', groupIds);
+
+          if (groupError) {
+            console.error('Error fetching group names:', groupError);
+          } else {
+            const formatted = groupData.map(group => ({
+              id: group.group_id,
+              name: group.group_name
+            }));
+            setGroupOptions(formatted);
+          }
+        }
+      }
+    };
+
+    fetchUserGroups();
+  }, [userid]);
+
+  useEffect(() => {
+    const fetchDefaultGroup = async () => {
       try {
         const response = await fetch(`http://localhost:5001/api/get-default-group?userid=${userid}`);
         const data = await response.json();
@@ -39,7 +75,7 @@ const Submit = () => {
       }
     };
 
-    if (userid) fetchGroupName();
+    if (userid) fetchDefaultGroup();
   }, [userid]);
 
   useEffect(() => {
@@ -68,6 +104,11 @@ const Submit = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleGroupChange = (e) => {
+    setGroupName(e.target.value);
+    setFormData(prev => ({ ...prev, name: '' })); // reset person on group change
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -75,7 +116,10 @@ const Submit = () => {
       const response = await fetch('http://localhost:5001/api/add-event', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          ...formData,
+          group_name: groupName // important to include the selected group
+        })
       });
 
       const result = await response.json();
@@ -114,6 +158,26 @@ const Submit = () => {
       </Typography>
       <Paper elevation={3} sx={{ p: 4, borderRadius: 2, backgroundColor: '#fff' }}>
         <form onSubmit={handleSubmit}>
+          {/* Group Dropdown */}
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 500 }}>
+              Group
+            </Typography>
+            <Select
+              fullWidth
+              value={groupName}
+              onChange={handleGroupChange}
+              displayEmpty
+              sx={{ backgroundColor: '#f5f5f5', borderRadius: 1 }}
+            >
+              {groupOptions.map((g) => (
+                <MenuItem key={g.id} value={g.id}>
+                  {g.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </Box>
+
           {/* Person Dropdown */}
           <Box sx={{ mb: 4 }}>
             <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 500 }}>

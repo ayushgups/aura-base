@@ -39,7 +39,7 @@ app.post('/api/add-event', async (req, res) => {
       ? nomineeUser.group_name[0]
       : nomineeUser.group_name;
 
-    // Step 2: Insert into events table
+    // Step 2: Insert into events table (always with is_approved = false)
     const { data: eventData, error: eventError } = await database
       .from('events')
       .insert([
@@ -49,7 +49,7 @@ app.post('/api/add-event', async (req, res) => {
           aura_points: parseInt(auraPoints),
           description,
           group_name: groupName,
-          is_approved: true
+          is_approved: false // Always initialize to false
         }
       ])
       .select();
@@ -78,6 +78,7 @@ app.post('/api/add-event', async (req, res) => {
       .map(([reviewerId, reviewerName]) => ({
         event_id: eventId,
         approved: false,
+        reviewed: false,  // Initialize reviewed status
         name_of_nominee: name,
         user_id_of_nominee: userIdOfNominee,
         name_of_reviewer: reviewerName,
@@ -198,7 +199,7 @@ app.post('/api/add-event', async (req, res) => {
       ? nomineeUser.group_name[0]
       : nomineeUser.group_name;
 
-    // Step 2: Insert into events table
+    // Step 2: Insert into events table (always with is_approved = false)
     const { data: eventData, error: eventError } = await database
       .from('events')
       .insert([
@@ -208,7 +209,7 @@ app.post('/api/add-event', async (req, res) => {
           aura_points: parseInt(auraPoints),
           description,
           group_name: groupName,
-          is_approved: false
+          is_approved: false // Always initialize to false
         }
       ])
       .select();
@@ -223,7 +224,7 @@ app.post('/api/add-event', async (req, res) => {
     const { data: groupData, error: groupError } = await database
       .from('groups')
       .select('people_map')
-      .eq('group_name', groupName)
+      .eq('group_id', groupName)
       .single();
 
     if (groupError || !groupData || !groupData.people_map) {
@@ -237,6 +238,7 @@ app.post('/api/add-event', async (req, res) => {
       .map(([reviewerId, reviewerName]) => ({
         event_id: eventId,
         approved: false,
+        reviewed: false,  // Initialize reviewed status
         name_of_nominee: name,
         user_id_of_nominee: userIdOfNominee,
         name_of_reviewer: reviewerName,
@@ -256,6 +258,150 @@ app.post('/api/add-event', async (req, res) => {
 
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// Get pending reviews for a user in a specific group
+app.get('/api/pending-reviews', async (req, res) => {
+  try {
+    const { group_id, user_id } = req.query;
+
+    if (!group_id || !user_id) {
+      return res.status(400).json({ error: 'Missing required parameters' });
+    }
+
+    console.log('Fetching pending reviews with params:', { group_id, user_id }); // Debug log
+
+    // First get the pending reviews
+    const { data: pendingData, error: pendingError } = await database
+      .from('pending')
+      .select('*')
+      .eq('user_id_of_reviewer', user_id)
+      .eq('reviewed', false);  // Only fetch unreviewed items
+
+    if (pendingError) {
+      console.error('Pending query error:', pendingError);
+      return res.status(500).json({ error: pendingError.message });
+    }
+
+    if (!pendingData || pendingData.length === 0) {
+      return res.status(200).json([]);
+    }
+
+    // Get the associated events
+    const eventIds = pendingData.map(p => p.event_id);
+    const { data: eventsData, error: eventsError } = await database
+      .from('events')
+      .select('*')
+      .in('event_id', eventIds)
+      .eq('group_name', group_id);
+
+    if (eventsError) {
+      console.error('Events query error:', eventsError);
+      return res.status(500).json({ error: eventsError.message });
+    }
+
+    // Combine the data
+    const combinedData = pendingData.map(pending => {
+      const event = eventsData.find(e => e.event_id === pending.event_id);
+      if (!event) return null;
+      
+      return {
+        ...pending,
+        events: event
+      };
+    }).filter(item => item !== null);
+
+    console.log('Combined data:', combinedData); // Debug log
+
+    res.status(200).json(combinedData);
+
+  } catch (error) {
+    console.error('Server error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Handle review decisions
+app.post('/api/review-event', async (req, res) => {
+  try {
+    const { pendingId, eventId, isApproved, groupId } = req.body;
+
+    if (!pendingId || !eventId || isApproved === undefined || !groupId) {
+      return res.status(400).json({ error: 'Missing required parameters' });
+    }
+
+    // 1. Update the pending entry
+    const { error: updateError } = await database
+      .from('pending')
+      .update({ 
+        approved: isApproved,
+        reviewed: true  // Mark as reviewed when processed
+      })
+      .eq('pending_id', pendingId);
+
+    if (updateError) {
+      return res.status(500).json({ error: updateError.message });
+    }
+
+    // 2. Get total number of people in the group
+    const { data: groupData, error: groupError } = await database
+      .from('groups')
+      .select('people_map')
+      .eq('group_id', groupId)
+      .single();
+
+    if (groupError) {
+      return res.status(500).json({ error: groupError.message });
+    }
+
+    const totalGroupMembers = Object.keys(groupData.people_map).length;
+
+    // 3. Count approved reviews for this event
+    const { data: approvedData, error: countError } = await database
+      .from('pending')
+      .select('*')
+      .eq('event_id', eventId)
+      .eq('approved', true);
+
+    if (countError) {
+      return res.status(500).json({ error: countError.message });
+    }
+
+    // 4. Calculate approval percentage and check if >= 50%
+    const approvedCount = approvedData.length;
+    const approvalPercentage = (approvedCount / totalGroupMembers) * 100;
+    
+    console.log('Approval stats:', {
+      approvedCount,
+      totalGroupMembers,
+      approvalPercentage,
+      eventId
+    });
+
+    if (approvalPercentage >= 50) {
+      // Update event approval status
+      const { error: eventUpdateError } = await database
+        .from('events')
+        .update({ is_approved: true })
+        .eq('event_id', eventId);
+
+      if (eventUpdateError) {
+        return res.status(500).json({ error: eventUpdateError.message });
+      }
+      
+      console.log(`Event ${eventId} approved with ${approvalPercentage}% approval`);
+    }
+
+    res.status(200).json({ 
+      message: 'Review processed successfully',
+      approvalPercentage,
+      wasApproved: approvalPercentage >= 50
+    });
+
+  } catch (error) {
+    console.error('Server error:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 

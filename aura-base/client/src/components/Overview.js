@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Row, Col } from 'react-bootstrap';
+import { Container, Row, Col, Dropdown } from 'react-bootstrap';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import supabase from "../helper/supabaseClient";
 import AuraLeaderboard from './AuraLeaderboard';
@@ -13,7 +13,8 @@ function Overview() {
   const { userid } = useParams();
 
   const [userName, setUserName] = useState('');
-  const [groupName, setGroupName] = useState(null);
+  const [groupName, setGroupName] = useState(null); // selected group_id
+  const [groupOptions, setGroupOptions] = useState([]); // {id: group_id, name: group_name}
   const [loading, setLoading] = useState(true);
   const [showDropdown, setDropdown] = useState(false);
 
@@ -28,43 +29,69 @@ function Overview() {
   };
 
   useEffect(() => {
-    const fetchUserName = async () => {
+    const fetchUserGroups = async () => {
       const { data, error } = await supabase
         .from('users')
-        .select('name')
+        .select('name, group_name')
         .eq('user_id', userid)
         .single();
 
       if (error) {
-        console.error('Error fetching user name:', error);
+        console.error('Error fetching user:', error);
       } else {
         setUserName(data.name);
+        const userGroupIds = data.group_name || [];
+
+        if (userGroupIds.length > 0) {
+          // Fetch group display names
+          const { data: groupData, error: groupError } = await supabase
+            .from('groups')
+            .select('group_id, group_name')
+            .in('group_id', userGroupIds);
+
+          if (groupError) {
+            console.error('Error fetching group names:', groupError);
+          } else {
+            const formattedGroups = groupData.map(group => ({
+              id: group.group_id,
+              name: group.group_name
+            }));
+            setGroupOptions(formattedGroups);
+          }
+        }
       }
     };
 
-    if (userid) fetchUserName();
+    if (userid) fetchUserGroups();
   }, [userid]);
 
   useEffect(() => {
-    const fetchGroupName = async () => {
+    const fetchDefaultGroup = async () => {
       try {
         const response = await fetch(`http://localhost:5001/api/get-default-group?userid=${userid}`);
         const data = await response.json();
         setGroupName(data.group || null);
       } catch (error) {
-        console.error('Error fetching group:', error);
+        console.error('Error fetching default group:', error);
         setGroupName(null);
       } finally {
         setLoading(false);
       }
     };
 
-    if (userid) fetchGroupName();
+    if (userid) fetchDefaultGroup();
   }, [userid]);
 
-  if (loading) {
-    return null; // Optional: return a spinner here
-  }
+  const handleGroupChange = (selectedGroupId) => {
+    setGroupName(selectedGroupId);
+  };
+
+  const getDisplayGroupName = (groupId) => {
+    const found = groupOptions.find(option => option.id === groupId);
+    return found ? found.name : "Select Group";
+  };
+
+  if (loading) return null;
 
   return (
     <Container fluid className="py-4">
@@ -72,15 +99,26 @@ function Overview() {
         <h1>Overview</h1>
 
         <div className="d-flex align-items-center" style={{ gap: '1rem', position: 'relative' }}>
-          {groupName && (
-            <div className="team-selector" style={{
-              backgroundColor: '#f1f1f1',
-              borderRadius: '9999px',
-              padding: '8px 16px',
-              fontWeight: 'bold',
-            }}>
-              {groupName}
-            </div>
+          {groupOptions.length > 0 && (
+            <Dropdown onSelect={handleGroupChange}>
+              <Dropdown.Toggle variant="light" style={{
+                backgroundColor: '#f1f1f1',
+                borderRadius: '9999px',
+                padding: '8px 16px',
+                fontWeight: 'bold',
+                border: 'none'
+              }}>
+                {getDisplayGroupName(groupName)}
+              </Dropdown.Toggle>
+
+              <Dropdown.Menu>
+                {groupOptions.map((group) => (
+                  <Dropdown.Item key={group.id} eventKey={group.id}>
+                    {group.name}
+                  </Dropdown.Item>
+                ))}
+              </Dropdown.Menu>
+            </Dropdown>
           )}
 
           <div style={{ position: 'relative', cursor: 'pointer' }} onClick={handleAvatarClick}>
@@ -115,23 +153,21 @@ function Overview() {
 
       {groupName ? (
         <>
-          {/* Top row with Leaderboard and Stats */}
           <Row className="g-4 mb-4">
             <Col lg={8}>
               <AuraLeaderboard groupName={groupName} />
             </Col>
             <Col lg={4}>
-              <StatsCards />
+              <StatsCards groupName={groupName} />
             </Col>
           </Row>
 
-          {/* Bottom row with Activity and Notifications */}
           <Row className="g-4">
             <Col lg={8}>
               <RecentActivity groupName={groupName} />
             </Col>
             <Col lg={4}>
-              <ReviewNotifications />
+              <ReviewNotifications groupName={groupName} userId={userid}/>
             </Col>
           </Row>
         </>
