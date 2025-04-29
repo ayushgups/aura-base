@@ -12,7 +12,11 @@
     "start:server": "cd server && npm run dev"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2",
-    "supabase": "^2.22.6"
+    "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.4",
+    "nodemon": "^3.1.10",
+    "react-scripts": "^5.0.1"
   }
 }
