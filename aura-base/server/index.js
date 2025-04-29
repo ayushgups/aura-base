@@ -64,7 +64,7 @@ app.post('/api/add-event', async (req, res) => {
     const { data: groupData, error: groupError } = await database
       .from('groups')
       .select('people_map')
-      .eq('group_name', groupName)
+      .eq('group_id', groupName)
       .single();
 
     if (groupError || !groupData || !groupData.people_map) {
@@ -147,90 +147,7 @@ app.get('/api/dashboard-results', async (req, res) => {
   }
 });
 
-<<<<<<< HEAD
-app.get('/api/dashboard-results', async (req, res) => {
-  try {
-    const { group_id } = req.query;
-
-    if (!group_id) {
-      return res.status(400).json({ error: 'Missing group_id parameter' });
-    }
-
-    console.log('Group ID:', group_id);
-
-    const { data, error } = await database
-      .from('events') // replace with your table name
-      .select('name, aura_points')
-      .eq('group_name', group_id)
-      .eq('is_approved', true);
-
-    console.log('Data:', data);
-
-    if (error) {
-      return res.status(500).json({ error: error.message });
-    }
-
-    // Group and sum aura points by user name
-    const userTotals = {};
-
-    data.forEach(event => {
-      const { name, aura_points } = event;
-      if (!userTotals[name]) {
-        userTotals[name] = 0;
-      }
-      userTotals[name] += aura_points;
-    });
-
-    // Convert into array and sort descending by total aura points
-    const topUsers = Object.entries(userTotals)
-      .map(([name, total_aura_points]) => ({ name, total_aura_points }))
-      .sort((a, b) => b.total_aura_points - a.total_aura_points)
-      .slice(0, 5); // Get top 5
-
-    res.status(200).json(topUsers);
-
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
 app.get('/api/get-default-group', async (req, res) => {
-  try {
-    const { userid } = req.query;
-
-    if (!userid) {
-      return res.status(400).json({ error: 'Missing userid parameter' });
-    }
-
-    const { data, error } = await database
-      .from('users')
-      .select('group_name')
-      .eq('user_id', userid)
-      .single(); // only 1 user per UUID
-
-    if (error) {
-      return res.status(500).json({ error: error.message });
-    }
-
-    if (!data || !data.group_name || data.group_name.length === 0) {
-      return res.status(200).json({}); // return empty object if no group
-    }
-
-    const firstGroupName = data.group_name[0];
-    console.log('First group name:', firstGroupName);
-    res.status(200).json({ group: firstGroupName });
-
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-
-// GET THE TABLE
-app.get('/api/get-events', async (req, res) => {
-=======
-app.get('/api/get-default-group', async (req, res) => {
->>>>>>> c210110ff1aa28f4f44ecaf3d7e9c1550aeb5ee2
   try {
     const { userid } = req.query;
 

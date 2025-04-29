@@ -8,10 +8,13 @@ import {
   MenuItem,
   Paper
 } from '@mui/material';
+import { useParams, Link } from 'react-router-dom';
 import supabase from '../helper/supabaseClient';
 import './Submit.css';
 
 const Submit = () => {
+  const { userid } = useParams();
+
   const [formData, setFormData] = useState({
     name: '',
     auraPoints: '',
@@ -19,13 +22,34 @@ const Submit = () => {
   });
 
   const [peopleOptions, setPeopleOptions] = useState([]);
+  const [groupName, setGroupName] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchGroupName = async () => {
+      try {
+        const response = await fetch(`http://localhost:5001/api/get-default-group?userid=${userid}`);
+        const data = await response.json();
+        setGroupName(data.group || null);
+      } catch (err) {
+        console.error('Error fetching default group:', err);
+        setGroupName(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (userid) fetchGroupName();
+  }, [userid]);
 
   useEffect(() => {
     const fetchPeopleMap = async () => {
+      if (!groupName) return;
+
       const { data, error } = await supabase
         .from('groups')
         .select('people_map')
-        .eq('group_name', 'BDAB')
+        .eq('group_id', groupName)
         .single();
 
       if (error) {
@@ -37,7 +61,7 @@ const Submit = () => {
     };
 
     fetchPeopleMap();
-  }, []);
+  }, [groupName]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -67,6 +91,21 @@ const Submit = () => {
       alert('Network error submitting event.');
     }
   };
+
+  if (loading) return null;
+
+  if (!groupName) {
+    return (
+      <Box sx={{ textAlign: 'center', mt: 8 }}>
+        <Typography variant="h6">
+          You haven't joined any groups yet! Join or create one{' '}
+          <Link to={`/groups/${userid}`} style={{ textDecoration: 'underline' }}>
+            here
+          </Link>.
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ p: 4, maxWidth: 600, mx: 'auto', mt: 6 }}>

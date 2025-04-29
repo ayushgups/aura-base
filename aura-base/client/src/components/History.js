@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Card, ListGroup } from 'react-bootstrap';
 import { FaArrowUp, FaArrowDown } from 'react-icons/fa';
+import { useParams, Link } from 'react-router-dom';
 import Avatar from './Avatar';
 import supabase from '../helper/supabaseClient';
 import './History.css';
@@ -8,7 +9,7 @@ import './History.css';
 const HistoryItem = ({ user, auraChange, description }) => (
   <ListGroup.Item className="history-item">
     <div className="d-flex align-items-start">
-      <Avatar name={user.name} size={45} /> {/* ✅ Use Avatar component */}
+      <Avatar name={user.name} size={45} />
       <div className="history-content ms-3">
         <div className="d-flex justify-content-between align-items-center mb-1">
           <div className="history-user">{user.name}</div>
@@ -33,15 +34,38 @@ const HistoryItem = ({ user, auraChange, description }) => (
 );
 
 const History = () => {
+  const { userid } = useParams();
+  const [groupName, setGroupName] = useState(null);
   const [historyData, setHistoryData] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchGroupName = async () => {
+      try {
+        const response = await fetch(`http://localhost:5001/api/get-default-group?userid=${userid}`);
+        const data = await response.json();
+        setGroupName(data.group || null);
+      } catch (error) {
+        console.error('Error fetching group:', error);
+        setGroupName(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (userid) fetchGroupName();
+  }, [userid]);
 
   useEffect(() => {
     const fetchEvents = async () => {
+      if (!groupName) return;
+
       const { data: eventsData, error: eventsError } = await supabase
         .from('events')
         .select('user_id, aura_points, description')
-        .eq("is_approved", true)
-        .order('time_created', { ascending: false }); // optional: newest first
+        .eq('is_approved', true)
+        .eq('group_name', groupName)
+        .order('time_created', { ascending: false });
 
       if (eventsError) {
         console.error('Error fetching events:', eventsError);
@@ -49,7 +73,7 @@ const History = () => {
       }
 
       const enriched = await Promise.all(eventsData.map(async (event) => {
-        const { data: userData, error: userError } = await supabase
+        const { data: userData } = await supabase
           .from('users')
           .select('name')
           .eq('user_id', event.user_id)
@@ -67,8 +91,21 @@ const History = () => {
       setHistoryData(enriched);
     };
 
-    fetchEvents();
-  }, []);
+    if (groupName) {
+      fetchEvents();
+    }
+  }, [groupName]);
+
+  if (loading) return null;
+
+  if (!groupName) {
+    return (
+      <div className="text-center" style={{ marginTop: '50px', fontSize: '1.2rem' }}>
+        You haven't joined any groups yet! Join or create one{' '}
+        <Link to={`/groups/${userid}`} style={{ textDecoration: 'underline' }}>here</Link>.
+      </div>
+    );
+  }
 
   return (
     <Card className="mb-4 history-card">
@@ -76,9 +113,13 @@ const History = () => {
         <h5 className="mb-0 fw-bold">Aura Events History</h5>
       </Card.Header>
       <ListGroup variant="flush">
-        {historyData.map((item, index) => (
-          <HistoryItem key={index} {...item} />
-        ))}
+        {historyData.length === 0 ? (
+          <ListGroup.Item>No events found for this group.</ListGroup.Item>
+        ) : (
+          historyData.map((item, index) => (
+            <HistoryItem key={index} {...item} />
+          ))
+        )}
       </ListGroup>
     </Card>
   );

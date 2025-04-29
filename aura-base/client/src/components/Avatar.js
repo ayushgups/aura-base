@@ -18,13 +18,9 @@ function stringToColor(str) {
 }
 
 // Avatar component
-<<<<<<< HEAD
-const Avatar = ({ name, size = 40 }) => {
-=======
 const Avatar = ({ name, size = 45 }) => {
   
   if (!name) return null;
->>>>>>> c210110ff1aa28f4f44ecaf3d7e9c1550aeb5ee2
   const initials = getInitials(name);
   const backgroundColor = stringToColor(name);
 

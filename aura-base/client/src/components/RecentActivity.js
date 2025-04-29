@@ -46,11 +46,7 @@ const RecentActivity = () => {
         // .select('user_id, aura_points, description');
         .select('user_id, aura_points, description, time_created')
         .order('time_created', { ascending: false })
-<<<<<<< HEAD
-        .eq('is_approved', true)
-=======
         .eq("is_approved", true)
->>>>>>> c210110ff1aa28f4f44ecaf3d7e9c1550aeb5ee2
         .limit(3);
 
 

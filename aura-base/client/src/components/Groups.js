@@ -11,7 +11,6 @@ function Groups() {
     const [message, setMessage] = useState('');
     const [userName, setUserName] = useState('');
 
-    // Fetch user's name from auth metadata
     useEffect(() => {
         const fetchUserData = async () => {
             const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -26,6 +25,54 @@ function Groups() {
         fetchUserData();
         fetchUserGroups();
     }, [userid]);
+
+    const addGroupToUser = async (userId, groupId) => {
+      const { data, error } = await supabase
+        .from('users')
+        .select('group_name')
+        .eq('user_id', userId)
+        .single();
+    
+      if (error || !data) {
+        console.error('Error fetching user groups:', error);
+        return;
+      }
+    
+      const currentGroups = data.group_name || [];
+      if (!currentGroups.includes(groupId)) {
+        const updatedGroups = [...currentGroups, groupId];
+        const { error: updateError } = await supabase
+          .from('users')
+          .update({ group_name: updatedGroups })
+          .eq('user_id', userId);
+        
+        if (updateError) {
+          console.error('Error updating user group list:', updateError);
+        }
+      }
+    };
+
+    const insertJoinEvent = async ({ name, user_id, group_name }) => {
+      const { data, error } = await supabase
+        .from('events')
+        .insert([
+          {
+            name,
+            user_id,
+            aura_points: 0,
+            description: 'joined group',
+            group_name,
+            is_approved: true
+          }
+        ])
+        .select();
+    
+      if (error) {
+        console.error('Error inserting join event:', error);
+      }
+    };
+    
+    
 
     // Fetch groups the user is part of
     const fetchUserGroups = async () => {
@@ -81,6 +128,12 @@ function Groups() {
             setMessage('Group created successfully! Group ID: ' + data[0].group_id);
             setNewGroupName('');
             fetchUserGroups();
+            await addGroupToUser(userid, data[0].group_id);
+            await insertJoinEvent({
+              name: displayName,
+              user_id: userid,
+              group_name: data[0].group_id
+            });
         }
     };
 
@@ -143,6 +196,12 @@ function Groups() {
             setMessage('Successfully joined group!');
             setJoinGroupId('');
             fetchUserGroups();
+            await addGroupToUser(userid, joinGroupId);
+            await insertJoinEvent({
+              name: displayName,
+              user_id: userid,
+              group_name: joinGroupId
+            });
         }
     };
 

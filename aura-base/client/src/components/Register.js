@@ -13,30 +13,49 @@ function Register() {
         event.preventDefault();
         setMessage("");
         setCreated("");
-
+      
         const { data, error } = await supabase.auth.signUp({
-            email: email,
-            password: password,
-            options: {
-                data: {
-                  displayName: displayName,
-                },
-              },
+          email: email,
+          password: password,
+          options: {
+            data: {
+              displayName: displayName,
+            },
+          },
         });
-
+      
         if (error) {
-            setMessage(error.message);
+          setMessage(error.message);
+          return;
+        }
+      
+        if (data && data.user) {
+          const user_id = data.user.id;
+      
+          // Insert user into "users" table
+          const { error: insertError } = await supabase
+            .from("users")
+            .insert([
+              {
+                user_id: user_id,
+                name: displayName,
+                group_name: [], // empty array
+              },
+            ]);
+      
+          if (insertError) {
+            setMessage("Account created, but failed to add user to database.");
+            console.error('Insert error:', insertError);
             return;
+          }
+      
+          setCreated("True");
+          setMessage("Account created successfully!");
+          setEmail("");
+          setPassword("");
+          setDisplayName("");
         }
-
-        if (data) {
-            setCreated("True");
-            setMessage("Account created successfully!");
-        }
-        setEmail("");
-        setPassword("");
-        setDisplayName("");
-    }
+      };
 
     return (
         <div className="auth-container">
@@ -84,7 +103,10 @@ function Register() {
                             <Link className="auth-link" to="/login">Log in</Link>
                         </>
                     ) : (
-                        <span>Thanks for registering! Check your email to confirm your account.</span>
+                        <>
+                            <span>Account created successfully!</span>
+                            <Link className="auth-link" to="/login">Log in</Link>
+                        </> 
                     )}
                 </div>
             </div>
