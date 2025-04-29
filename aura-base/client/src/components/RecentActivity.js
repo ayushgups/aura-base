@@ -5,14 +5,35 @@ import Avatar from './Avatar';
 import supabase from '../helper/supabaseClient';
 import './RecentActivity.css';
 
+// Function to generate consistent colors based on name
+const getAvatarColor = (name) => {
+  const colors = [
+    '#FF9B9B', // Light Red
+    '#98FB98', // Light Green
+    '#87CEEB', // Sky Blue
+    '#DDA0DD', // Plum
+    '#F0E68C', // Khaki
+    '#E6A8D7', // Light Purple
+    '#98FB98', // Pale Green
+    '#87CEFA', // Light Sky Blue
+    '#FFA07A', // Light Salmon
+    '#B0C4DE'  // Light Steel Blue
+  ];
+  
+  // Generate a consistent index based on the name
+  const index = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colors.length;
+  return colors[index];
+};
+
 const RecentActivityItem = ({ user, auraChange, description }) => {
   const initials = user.name.split(' ').map(n => n[0]).join('').toUpperCase();
   const isGain = auraChange > 0;
+  const avatarColor = getAvatarColor(user.name);
   
   return (
     <ListGroup.Item className="recent-activity-item">
       <div className="d-flex align-items-start">
-        <div className="activity-avatar">
+        <div className="activity-avatar" style={{ backgroundColor: avatarColor }}>
           {initials}
         </div>
         <div className="activity-content">
