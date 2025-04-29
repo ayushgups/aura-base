@@ -26,7 +26,7 @@ const Submit = () => {
   return (
     <Box sx={{ p: 4, maxWidth: 800, mx: 'auto' }}>
       <Typography variant="h4" component="h1" gutterBottom>
-        Submit an Event
+       <b> Submit an Event </b>
       </Typography>
       <Paper elevation={3} sx={{ p: 4 }}>
         <form onSubmit={handleSubmit}>

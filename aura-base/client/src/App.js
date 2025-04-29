@@ -1,59 +1,31 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { Container, Row, Col } from 'react-bootstrap';
-import Sidebar from './components/Sidebar';
-import AuraLeaderboard from './components/AuraLeaderboard';
-import StatsCards from './components/StatsCards';
-import RecentActivity from './components/RecentActivity';
-import ReviewNotifications from './components/ReviewNotifications';
+import { Container} from 'react-bootstrap';
 import History from './components/History';
 import Submit from './components/Submit';
+import Register from "./components/Register";
+import Login from "./components/Login"
+import Home from './components/Home';
+import Groups from './components/Groups';
+import Overview from './components/Overview';
+import Wrapper from './components/Wrapper';
+import DashboardLayout from './components/DashboardLayout';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
-
-function HomePage() {
-  return (
-    <Container fluid className="py-4">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h1>Overview</h1>
-        <div className="team-selector">
-          The Kava Kangaroos
-        </div>
-      </div>
-      
-      {/* Top row with Leaderboard and Stats */}
-      <Row className="g-4 mb-4">
-        <Col lg={8}>
-          <AuraLeaderboard />
-        </Col>
-        <Col lg={4}>
-          <StatsCards />
-        </Col>
-      </Row>
-
-      {/* Bottom row with Activity and Notifications */}
-      <Row className="g-4">
-        <Col lg={8}>
-          <RecentActivity />
-        </Col>
-        <Col lg={4}>
-          <ReviewNotifications />
-        </Col>
-      </Row>
-    </Container>
-  );
-}
 
 function App() {
   return (
     <Router>
-      <div className="app">
-        <Sidebar />
-        <div className="main-content">
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/submit" element={<Submit />} />
-            <Route path="/history" element={
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/dashboard/:userid" element={<DashboardLayout><Wrapper><Overview /></Wrapper></DashboardLayout>} />
+        <Route path="/submit/:userid" element={<DashboardLayout><Wrapper><Submit /></Wrapper></DashboardLayout>} />
+        <Route path="/groups/:userid" element={<DashboardLayout><Wrapper><Groups /></Wrapper></DashboardLayout>} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/history/:userid" element={
+          <DashboardLayout>
+            <Wrapper>
               <Container fluid className="py-4">
                 <div className="d-flex justify-content-between align-items-center mb-4">
                   <h1>History</h1>
@@ -63,10 +35,10 @@ function App() {
                 </div>
                 <History />
               </Container>
-            } />
-          </Routes>
-        </div>
-      </div>
+            </Wrapper>
+          </DashboardLayout>
+        } />
+      </Routes>
     </Router>
   );
 }
