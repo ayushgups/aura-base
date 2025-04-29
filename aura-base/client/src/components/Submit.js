@@ -125,7 +125,6 @@ const Submit = () => {
       const result = await response.json();
 
       if (response.ok) {
-        alert('Event submitted successfully!');
         setFormData({ name: '', auraPoints: '', description: '' });
       } else {
         alert('Error: ' + result.error);
