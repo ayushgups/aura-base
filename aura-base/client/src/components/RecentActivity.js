@@ -5,32 +5,38 @@ import Avatar from './Avatar';
 import supabase from '../helper/supabaseClient';
 import './RecentActivity.css';
 
-const RecentActivityItem = ({ user, auraChange, description }) => (
-  <ListGroup.Item className="recent-activity-item">
-    <div className="d-flex align-items-start">
-      <Avatar name={user.name} size={45} />
-      <div className="activity-content ms-3">
-        <div className="d-flex justify-content-between align-items-center mb-1">
-          <div className="activity-user">{user.name}</div>
-          <div className="activity-aura">
-            {auraChange > 0 ? (
-              <>
-                <FaArrowUp className="text-success" />
-                <span className="text-success ms-1">+{auraChange} Aura</span>
-              </>
+const RecentActivityItem = ({ user, auraChange, description }) => {
+  const initials = user.name.split(' ').map(n => n[0]).join('').toUpperCase();
+  const isGain = auraChange > 0;
+  
+  return (
+    <ListGroup.Item className="recent-activity-item">
+      <div className="d-flex align-items-start">
+        <div className="activity-avatar">
+          {initials}
+        </div>
+        <div className="activity-content">
+          <div className="d-flex justify-content-between align-items-start">
+            <div>
+              <div className="activity-user">{user.name}</div>
+              <div className={`activity-aura ${isGain ? 'gained' : 'lost'}`}>
+                {isGain ? 'Gained' : 'Lost'} {Math.abs(auraChange)} Aura
+              </div>
+            </div>
+            {isGain ? (
+              <FaArrowUp className="arrow-icon text-success" />
             ) : (
-              <>
-                <FaArrowDown className="text-danger" />
-                <span className="text-danger ms-1">{auraChange} Aura</span>
-              </>
+              <FaArrowDown className="arrow-icon text-danger" />
             )}
           </div>
+          <div className="activity-description">
+            {description}
+          </div>
         </div>
-        <div className="activity-description text-muted">{description}</div>
       </div>
-    </div>
-  </ListGroup.Item>
-);
+    </ListGroup.Item>
+  );
+};
 
 const RecentActivity = ({ groupName }) => {
   const [events, setEvents] = useState([]);
@@ -73,9 +79,9 @@ const RecentActivity = ({ groupName }) => {
   }, [groupName]);
 
   return (
-    <Card className="mb-4 recent-activity-card">
-      <Card.Header className="bg-white">
-        <h5 className="mb-0 fw-bold">Recent Activity</h5>
+    <Card className="recent-activity-card">
+      <Card.Header>
+        <h5>Recent Activity</h5>
       </Card.Header>
       <ListGroup variant="flush">
         {events.length === 0 ? (
