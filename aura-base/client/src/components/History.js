@@ -1,15 +1,14 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, ListGroup } from 'react-bootstrap';
-import { FaArrowUp, FaArrowDown, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import { FaArrowUp, FaArrowDown } from 'react-icons/fa';
+import Avatar from './Avatar';
+import supabase from '../helper/supabaseClient';
 import './History.css';
-import axios from 'axios';
-import { useEffect, useState } from 'react';
-
 
 const HistoryItem = ({ user, auraChange, description }) => (
   <ListGroup.Item className="history-item">
     <div className="d-flex align-items-start">
-      <img src={user.avatar} alt={user.name} className="history-avatar" />
+      <Avatar name={user.name} size={45} /> {/* ✅ Use Avatar component */}
       <div className="history-content ms-3">
         <div className="d-flex justify-content-between align-items-center mb-1">
           <div className="history-user">{user.name}</div>
@@ -38,24 +37,51 @@ const History = () => {
 
   useEffect(() => {
     const fetchEvents = async () => {
-      try {
-        const response = await axios.get('http://localhost:5001/api/get-events');
-        const formatted = response.data.map(event => ({
+      const { data: eventsData, error: eventsError } = await supabase
+        .from('events')
+        .select('user_id, aura_points, description')
+        .eq("is_approved", true)
+        .order('time_created', { ascending: false }); // optional: newest first
+
+      if (eventsError) {
+        console.error('Error fetching events:', eventsError);
+        return;
+      }
+
+      const enriched = await Promise.all(eventsData.map(async (event) => {
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('name')
+          .eq('user_id', event.user_id)
+          .single();
+
+        return {
           user: {
-            name: event.name,
-            avatar: '/avatar-placeholder.png'  // optionally fetch real avatars later
+            name: userData?.name || 'Unknown',
           },
           auraChange: event.aura_points,
-          description: event.description
-        }));
-        setHistoryData(formatted);
-      } catch (error) {
-        console.error('Error fetching events:', error);
-      }
+          description: event.description,
+        };
+      }));
+
+      setHistoryData(enriched);
     };
 
     fetchEvents();
   }, []);
-}
+
+  return (
+    <Card className="mb-4 history-card">
+      <Card.Header className="bg-white">
+        <h5 className="mb-0 fw-bold">Aura Events History</h5>
+      </Card.Header>
+      <ListGroup variant="flush">
+        {historyData.map((item, index) => (
+          <HistoryItem key={index} {...item} />
+        ))}
+      </ListGroup>
+    </Card>
+  );
+};
 
 export default History;

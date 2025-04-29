@@ -2,12 +2,14 @@ import React from 'react';
 import { Card, ListGroup } from 'react-bootstrap';
 import { FaArrowUp, FaArrowDown } from 'react-icons/fa';
 import './RecentActivity.css';
+import Avatar from './Avatar.js';
+import supabase from '../helper/supabaseClient';
 
-const ActivityItem = ({ user, action, change, description }) => (
+const ActivityItem = ({ user, change, description }) => (
   <ListGroup.Item className="activity-item">
     <div className="d-flex">
       <div className="activity-left d-flex">
-        <img src={user.avatar} alt={user.name} className="activity-avatar" />
+        <Avatar name={user.name}/>
         <div className="ms-3">
           <div className="user-info">
             <strong>{user.name}</strong>
@@ -34,26 +36,47 @@ const ActivityItem = ({ user, action, change, description }) => (
 );
 
 const RecentActivity = () => {
-  const activities = [
-    {
-      user: { name: 'Ayush Gupta', avatar: '/avatar-placeholder.png' },
-      action: 'gained',
-      change: 100,
-      description: 'The description of what Ayush did to gain aura.'
-    },
-    {
-      user: { name: 'Tarun Shah', avatar: '/avatar-placeholder.png' },
-      action: 'lost',
-      change: -150,
-      description: 'The description of what Tarun did to lose aura.'
-    },
-    {
-      user: { name: 'Krish Arora', avatar: '/avatar-placeholder.png' },
-      action: 'gained',
-      change: 100,
-      description: 'The description of what Krish did to gain aura.'
-    }
-  ];
+  // fetching events dynamically from DB
+  const [activities, setActivities] = React.useState([]);
+
+  React.useEffect(() => {
+    const fetchActivities = async () => {
+      const { data: eventsData, error: eventsError } = await supabase
+        .from('events')
+        // .select('user_id, aura_points, description');
+        .select('user_id, aura_points, description, time_created')
+        .order('time_created', { ascending: false })
+        .eq("is_approved", true)
+        .limit(3);
+
+
+      if (eventsError) {
+        console.error('Error fetching events:', eventsError);
+        return;
+      }
+
+      // For each event, fetch user's name from users table
+      const enriched = await Promise.all(eventsData.map(async (event) => {
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('name')
+          .eq('user_id', event.user_id)
+          .single();
+
+        return {
+          user: {
+            name: userData?.name || 'Unknown',
+          },
+          change: event.aura_points,
+          description: event.description,
+        };
+      }));
+
+      setActivities(enriched);
+    };
+
+    fetchActivities();
+  }, []);
 
   return (
     <Card className="mb-4 recent-activity">
