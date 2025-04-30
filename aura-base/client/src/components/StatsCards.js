@@ -21,10 +21,16 @@ const StatsCard = ({ icon, value, label, iconClass }) => (
 const StatsCards = ({ groupName }) => {
   const { userid } = useParams();
   const [stats, setStats] = useState(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchStats = async () => {
-      if (!groupName) return;
+      if (!groupName) {
+        console.log('No groupName provided');
+        return;
+      }
+
+      console.log('Fetching stats for group:', groupName);
 
       const { data: events, error } = await supabase
         .from('events')
@@ -34,6 +40,20 @@ const StatsCards = ({ groupName }) => {
 
       if (error) {
         console.error('Supabase error:', error);
+        setError(error.message);
+        return;
+      }
+
+      console.log('Fetched events:', events);
+
+      if (!events || events.length === 0) {
+        console.log('No events found');
+        setStats({
+          winner: { name: 'No Winner Yet', total: 0 },
+          shitter: { name: 'No Shitter Yet', total: 0 },
+          gainer: { name: 'No Gainer Yet', total: 0 },
+          currentUser: { name: 'Your Aura', total: 0 }
+        });
         return;
       }
 
@@ -58,32 +78,48 @@ const StatsCards = ({ groupName }) => {
         }
       });
 
+      console.log('Calculated totals:', totals);
+      console.log('Recent gains:', recentGains);
+
       const sorted = Object.entries(totals)
         .map(([user_id, { name, total }]) => ({ user_id, name, total }))
         .sort((a, b) => b.total - a.total);
 
-      const winner = sorted[0];
-      const shitter = sorted[sorted.length - 1];
-      const gainer = Object.entries(recentGains)
+      console.log('Sorted users:', sorted);
+
+      // Add safety checks
+      const winner = sorted.length > 0 ? sorted[0] : { name: 'No Winner Yet', total: 0 };
+      const shitter = sorted.length > 0 ? sorted[sorted.length - 1] : { name: 'No Shitter Yet', total: 0 };
+      
+      const gainers = Object.entries(recentGains)
         .map(([name, total]) => ({ name, total }))
-        .sort((a, b) => b.total - a.total)[0];
+        .sort((a, b) => b.total - a.total);
+      
+      const gainer = gainers.length > 0 ? gainers[0] : { name: 'No Recent Gains', total: 0 };
 
       const current = totals[userid]
         ? { name: totals[userid].name, total: totals[userid].total }
         : { name: 'Your Aura', total: 0 };
 
-      setStats({
+      const statsData = {
         winner,
         shitter,
-        gainer: gainer || { name: 'N/A', total: 0 },
+        gainer,
         currentUser: current
-      });
+      };
+
+      console.log('Final stats:', statsData);
+      setStats(statsData);
     };
 
     fetchStats();
   }, [groupName, userid]);
 
-  if (!stats) return null;
+  if (error) {
+    return <div className="text-danger">Error loading stats: {error}</div>;
+  }
+
+  if (!stats) return <div>Loading stats...</div>;
 
   return (
     <Card className="stats-container">
