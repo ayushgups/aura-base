@@ -118,7 +118,7 @@ const Submit = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
-          group_name: groupName // important to include the selected group
+          groupName: groupName  // Changed from group_name to groupName to match server expectation
         })
       });
 

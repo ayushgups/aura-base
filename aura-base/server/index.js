@@ -20,24 +20,68 @@ const database = createClient(
 );
 
 app.post('/api/add-event', async (req, res) => {
-  const { name, auraPoints, description } = req.body; // name = nominee
+  const { name, auraPoints, description, groupName: submittedGroupName } = req.body; // name = nominee
+
+  console.log('Received request:', {
+    name,
+    auraPoints,
+    description,
+    submittedGroupName,
+    submittedGroupNameType: typeof submittedGroupName
+  });
 
   try {
-    // Step 1: Lookup nominee's user_id and group_name
+    // Step 1: Lookup nominee's user_id and verify they are in the group
     const { data: nomineeUser, error: userError } = await database
       .from('users')
-      .select('user_id, group_name')
+      .select('user_id, group_name, name')
       .eq('name', name)
       .single();
 
+    console.log('Found nominee data:', {
+      ...nomineeUser,
+      groupNameType: nomineeUser ? typeof nomineeUser.group_name : 'undefined',
+      isArray: nomineeUser ? Array.isArray(nomineeUser.group_name) : false
+    });
+    
     if (userError || !nomineeUser) {
       return res.status(400).json({ error: 'Nominee not found in users table' });
     }
 
+    // Verify the nominee is in the submitted group
+    const userGroups = Array.isArray(nomineeUser.group_name) 
+      ? nomineeUser.group_name 
+      : [nomineeUser.group_name];
+    
+    console.log('Comparison details:', {
+      userGroups,
+      submittedGroupName,
+      exactMatches: userGroups.map(g => ({
+        group: g,
+        matches: g === submittedGroupName,
+        submittedLength: submittedGroupName.length,
+        groupLength: g.length
+      }))
+    });
+
+    if (!userGroups.includes(submittedGroupName)) {
+      return res.status(400).json({ 
+        error: 'Nominee is not a member of the specified group',
+        debug: {
+          userGroups,
+          submittedGroupName,
+          name: nomineeUser.name,
+          exactMatches: userGroups.map(g => ({
+            group: g,
+            matches: g === submittedGroupName,
+            submittedLength: submittedGroupName.length,
+            groupLength: g.length
+          }))
+        }
+      });
+    }
+
     const userIdOfNominee = nomineeUser.user_id;
-    const groupName = Array.isArray(nomineeUser.group_name)
-      ? nomineeUser.group_name[0]
-      : nomineeUser.group_name;
 
     // Step 2: Insert into events table (always with is_approved = false)
     const { data: eventData, error: eventError } = await database
@@ -48,7 +92,7 @@ app.post('/api/add-event', async (req, res) => {
           user_id: userIdOfNominee,
           aura_points: parseInt(auraPoints),
           description,
-          group_name: groupName,
+          group_name: submittedGroupName,
           is_approved: false // Always initialize to false
         }
       ])
@@ -64,7 +108,7 @@ app.post('/api/add-event', async (req, res) => {
     const { data: groupData, error: groupError } = await database
       .from('groups')
       .select('people_map')
-      .eq('group_id', groupName)
+      .eq('group_id', submittedGroupName)
       .single();
 
     if (groupError || !groupData || !groupData.people_map) {
